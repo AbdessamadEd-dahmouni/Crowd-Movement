@@ -1,17 +1,20 @@
 from math import sqrt
 import time
-from tkinter import Tk, Canvas, Button, Label
+from tkinter import Tk, Canvas, Button, Label,ALL
 from random import choice
 #*******************Parameters*****************************#
-N=300
-r=3
-INF=10**6
-M = 100
-C = 6
-sortie=[(M-1,M//2)]
+N=200        # number of agents
+r=3          # radius of agents (for the simulation) 
+INF=10**6    # high value for the boundaries of the Fast Marching algorithm
+X = 100      # width of the grid
+Y = 75       # height of the grid
+# scaling factors for the canvas 
+Cx = 2*r 
+Cy = 2*r
+sortie=[(X-1,Y//2)] # the gate(s) (list of tuples)
 #******************fonctions pour FMM**********************#
 def voisinage(i,j):
-    global M,R_init
+    global R_init
     L = [(i-1,j),(i+1,j),(i,j-1),(i,j+1)]
     k=0
     while k<len(L):
@@ -27,12 +30,12 @@ def resolution1(t1,t2,t3,t4):
     else:
         return min(v1,v2)+1
 def resolution2(i,j):
-    global M
+    global X,Y
     if i==0:
             t1=INF
             t2=T[1][j]
-    elif i==M-1:
-            t1=T[M-2][i]
+    elif i==X-1:
+            t1=T[X-2][j]
             t2=INF
     else:
             t1=T[i-1][j]
@@ -41,8 +44,8 @@ def resolution2(i,j):
     if j==0:
             t3=INF
             t4=T[i][1]
-    elif j==M-1:
-            t3=T[i][M-2]
+    elif j==Y-1:
+            t3=T[i][Y-2]
             t4=INF
     else:
             t3=T[i][j-1]
@@ -63,34 +66,39 @@ def calculer():
             T[i][j]=x
             TAB[i][j]=-1
 def incomplet(TAB):
-    global M
-    return (TAB!=[[1]*M for i in range(M)])
+    global X
+    return (TAB!=[[1]*Y for i in range(X)])
 #*********************initialisation************************#
 fen1=Tk()
-can1=Canvas(fen1,height=600,width=600,bg='dark grey')
+width=Cx*X
+height=Cy*Y
+can1=Canvas(fen1,height=height,width=width,bg='grey80')
 x1=time.clock()    
-T=[[INF]*M for i in range(M)]
-TAB=[[0]*M for i in range(M)]
+T=[[INF]*Y for i in range(X)]
+TAB=[[0]*Y for i in range(X)]
 for [i,j] in sortie:
     TAB[i][j]=1
     T[i][j]=0
 #*******************obstacles*******************************#
 def obstacle(x1,x2,y1,y2):
-    global R,TAB,obst,C
+    global R,TAB,obst,Cx,Cy,Y
     for i in range(x1,x2+1):
-      for j in range(y1,y2):
+      for j in range(y1,y2+1):
         TAB[i][j]=1
         if (i,j) in R :
           R.remove((i,j))
     if obst==0:
-      can1.create_rectangle(C*x1,C*y1,C*x2,C*y2,fill='black')
+      if y2==Y-1:
+          y2=Y
+      can1.create_rectangle(Cx*x1,Cy*y1,Cx*x2,Cy*y2,fill='black')
             #*************************#
-R=[(i,j) for i in range(M) for j in range(M)]
+R=[(i,j) for i in range(X) for j in range(Y)]
 obst=0
-d_obs = M//5
+dx = X//5
+dy = Y//5
 for i in range(5):
-    obstacle(d_obs*i           ,d_obs*i+1*d_obs//4,0    ,3*d_obs+1)
-    obstacle(d_obs*i+2*d_obs//4,d_obs*i+3*d_obs//4,2*d_obs,5*d_obs)
+    obstacle(dx*i        ,dx*i+1*dx//4,0   ,3*dy)
+    obstacle(dx*i+2*dx//4,dx*i+3*dx//4,2*dy,5*dy-1)
 R_init=R.copy()
 obst=1
 #***********************Fast Marching*************************#
@@ -110,7 +118,7 @@ while( incomplet(TAB) and len(Pile)>0 ):
     T[i][j]=v
     TAB[i][j]=1
     for [k,l] in [[i-1,j],[i+1,j],[i,j-1],[i,j+1]] :
-        if k>=0 and k<=M-1 and l>=0 and l<=M-1 and TAB[k][l]!=1 and ([k,l] not in Pile_test):
+        if k>=0 and k<=X-1 and l>=0 and l<=Y-1 and TAB[k][l]!=1 and ([k,l] not in Pile_test):
             Pile_test.append([k,l])
     calculer()
     Pile.sort()
@@ -133,7 +141,7 @@ def best(obj):
         return None
 
 def move():
-    global objs,ps,dr,T,C
+    global objs,ps,dr,T,Cx,Cy
     duree.configure(text=duree.configure(text='Iteration : '+str(dr)))
     if ps==0:
       finev=0
@@ -150,7 +158,7 @@ def move():
             if new is not None:
                 objs[i]=new
                 finev=1
-                can1.coords(cercle[i],C*new[0]-r,C*new[1]-r,C*new[0]+r,C*new[1]+r)
+                can1.coords(cercle[i],Cx*new[0]-r,Cy*new[1]-r,Cx*new[0]+r,Cy*new[1]+r)
             i+=1
        if finev==1:
           fen1.after(20,move)
@@ -165,13 +173,16 @@ def pause():
        ps=0
        move()
    
-def reinitialiser():
-    global objs,cercle,R,R_init,M,C,d_obs
+def initialiser():
+    global objs,cercle,R,R_init,X,Y,Cx,Cy,dx,dy,obst,ps
+    can1.delete(ALL)
+    obst=0
+    ps  =0
     objs=[]
-    R=[(i,j) for i in range(M) for j in range(M)]
+    R=[(i,j) for i in range(X) for j in range(Y)]
     for i in range(5):
-        obstacle(d_obs*i           ,d_obs*i+1*d_obs//4,0    ,3*d_obs+1)
-        obstacle(d_obs*i+2*d_obs//4,d_obs*i+3*d_obs//4,2*d_obs,5*d_obs)
+        obstacle(dx*i        ,dx*i+1*dx//4,0   ,3*dy)
+        obstacle(dx*i+2*dx//4,dx*i+3*dx//4,2*dy,5*dy-1)
     R_init = R.copy()
     objs.append(choice(R))
     for i in range(1,N):
@@ -179,7 +190,9 @@ def reinitialiser():
        objs.append(choice(R))
     cercle=[]
     for obj in objs:
-        cercle.append(can1.create_oval(C*obj[0]-r,C*obj[1]-r,C*obj[0]+r,C*obj[1]+r,width=1,fill='red'))
+        cercle.append(can1.create_oval(Cx*obj[0]-r,Cy*obj[1]-r,Cx*obj[0]+r,Cy*obj[1]+r,width=1,fill='red'))
+    can1.create_rectangle(3,3,width,height,width=2,outline='black')
+
 def slow():
     global ps
     if ps==1:
@@ -196,14 +209,17 @@ for i in range(1,N):
     objs.append(choice(R))
 cercle=[]
 for obj in objs:
-    cercle.append(can1.create_oval(C*obj[0]-r,C*obj[1]-r,C*obj[0]+r,C*obj[1]+r,width=1,fill='red'))
+    cercle.append(can1.create_oval(Cx*obj[0]-r,Cy*obj[1]-r,Cx*obj[0]+r,Cy*obj[1]+r,width=1,fill='red'))
 duree=Label(fen1)
+can1.create_rectangle(3,3,width,height,width=2,outline='black')
+for sx,sy in sortie:
+    can1.create_rectangle(Cx*(sx+1)-4,Cy*(sy-1),Cx*(sx+1)-1,Cy*(sy+1),fill='light green')
 can1.grid(row=0,column=0,rowspan=6,padx=10,pady=5)
-bou1=Button(fen1,text='Start',width=8,command=move)
-bou2=Button(fen1,text='Leave',command=fen1.destroy)
-bou3=Button(fen1,text='Pause/Resume',command=pause)
-bou4=Button(fen1,text='Initialize',command=reinitialiser)
-bou5=Button(fen1,text='1 step',command=slow)
+bou1=Button(fen1,text='Start'       ,width=12,command=move)
+bou2=Button(fen1,text='Leave'       ,width=12,command=fen1.destroy)
+bou3=Button(fen1,text='Pause/Resume',width=12,command=pause)
+bou4=Button(fen1,text='Initialize'  ,width=12,command=initialiser)
+bou5=Button(fen1,text='1 step'      ,width=12,command=slow)
 bou1.grid(row=1,column=1,padx=5,pady=5)
 bou2.grid(row=5,column=1,padx=5,pady=5)
 bou3.grid(row=4,column=1,padx=5,pady=5)

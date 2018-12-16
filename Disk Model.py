@@ -2,10 +2,10 @@ from tkinter import Tk, Canvas, Button, Label, ALL
 from numpy import pi,arccos,arctan,cos,sin,sqrt
 from random import choice
 t=5    # temps pour faire un pas
-v=0.2  #vitesse
+v=0.2  # vitesse
 p=v*t  # Pas
-r=12   # Rayon des disques
-N=120  # Nombre de gens
+r=10   # Rayon des disques
+N=100  # Nombre de gens
 longueur=800
 largeur=600
 ys=largeur/2   #coordonnées de la sortie
@@ -52,16 +52,13 @@ def direction(i):
             T.append([pi/2,arccos((largeur-y[i]-r)/p)])
         nbcontact=len(T)
         j=0
-        tour=False
         while j<len(T) :
             g=T[j]
             if g[0]-g[1]<-pi :
-                tour=True
                 T.pop(j)
                 T.append([(g[0]+g[1]-pi)/2,(g[0]+g[1]+pi)/2])
                 T.append([(g[0]-g[1]+3*pi)/2,(-g[0]+g[1]-pi)/2])
             elif g[0]+g[1]>pi  :
-                tour=True
                 T.pop(j)
                 T.append([(g[0]-g[1]+pi)/2,(pi-g[0]+g[1])/2])
                 T.append([(g[0]+g[1]-3*pi)/2,(g[0]+g[1]-pi)/2])
@@ -175,8 +172,8 @@ def move():
             x.pop(i)
             y.pop(i)
       temps+=1
-      duree.configure(text='Time : '+str(temps*5)+' ms')
-      nombre.configure(text='Number : '+str(len(x)))
+      duree.configure(   text='Time : '+str(temps*5)+' ms')
+      nombre.configure(  text='Number : '+str(len(x)))
       contacts.configure(text='Collisions : '+str(c//2))
       if finev==1:
         fen1.after(t,move)
@@ -195,7 +192,7 @@ def initialiser():
         x[i],y[i]=2*r*x[i],2*r*y[i]
     can1.delete(ALL)
     can1.create_rectangle(3,3,longueur,largeur,width=2,outline='black')
-    can1.create_rectangle(longueur-1,largeur/2.0-4*r,longueur+2,largeur/2.0+4*r,fill='red')
+    can1.create_rectangle(xs-2*r-2,ys-4*r,xs-2*r+2,ys+4*r,fill='red')
     cercle=[]
     for i in range(N):
         cercle.append([can1.create_oval(x[i]-r,y[i]-r,x[i]+r,y[i]+r,width=1,fill='black'),can1.create_line(x[i],y[i],x[i]+r,y[i],width=1,fill='red')])
@@ -228,16 +225,16 @@ cercle=[]
 for i in range(N):
     cercle.append([can1.create_oval(x[i]-r,y[i]-r,x[i]+r,y[i]+r,width=1,fill='black'),can1.create_line(x[i],y[i],x[i]+r,y[i],width=1,fill='red')])
 can1.create_rectangle(3,3,longueur,largeur,width=2,outline='black')
-can1.create_rectangle(longueur-1,largeur/2.0-4*r,longueur+2,largeur/2.0+4*r,fill='red')
+can1.create_rectangle(xs-2*r-2,ys-4*r,xs-2*r+2,ys+4*r,fill='red')
 can1.grid(row=0,column=0,rowspan=8)
-duree=Label(fen1,width=20)
-nombre=Label(fen1,width=20)
+duree   =Label(fen1,width=20)
+nombre  =Label(fen1,width=20)
 contacts=Label(fen1,width=20)
-bou0=Button(fen1,text='Start',command=move)
-bou1=Button(fen1,text='Pause/Resume',command=pause)
-bou2=Button(fen1,text='Initialize',command=initialiser)
-bou3=Button(fen1,text='1 step',command=slow)
-bou4=Button(fen1,text='Quit',command=fen1.destroy)
+bou0=Button(fen1,text='Start'       ,width=12,command=move)
+bou1=Button(fen1,text='Pause/Resume',width=12,command=pause)
+bou2=Button(fen1,text='Initialize'  ,width=12,command=initialiser)
+bou3=Button(fen1,text='1 step'      ,width=12,command=slow)
+bou4=Button(fen1,text='Quit'        ,width=12,command=fen1.destroy)
 
 duree.grid(row=0,column=1,padx=5,pady=5)
 nombre.grid(row=1,column=1,padx=5,pady=5)
